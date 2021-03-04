@@ -9,14 +9,16 @@ class StimuliDataset(Dataset):
         self.train = train
         self.root_dir = root_dir
         self.__load_data()
+        self.__build_transform()
 
     def __build_transform(self):
         normalize = transforms.Normalize(
             mean=[0.485, 0.456, 0.406],                                         
             std=[0.229, 0.224, 0.225])
         self.transform = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),            
+            transforms.RandomHorizontalFlip(),         
             transforms.ToTensor(),            
             normalize,
         ])
@@ -27,8 +29,7 @@ class StimuliDataset(Dataset):
         else:
             path = os.path.join(self.root_dir, 'val.pt')            
         self.data, self.label = torch.load(path)
-        print(self.data.shape, self.label.shape)
-
+        
     def __len__(self):
         return len(self.data)
 

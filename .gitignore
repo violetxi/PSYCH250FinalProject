@@ -134,3 +134,4 @@ dmypy.json
 # large folders
 data/stimuli/
 data/processed/
+checkpoints/
