@@ -30,7 +30,7 @@ class RawStimuliProcessor(object):
                     for image_file in image_files]        
         self.category_files = {
             category : [] for category in SUPER_SUB_CLASSES
-        }
+1;95;0c        }
         subcategories = os.listdir(self.raw_folder)
         for super_category in SUPER_SUB_CLASSES:
             for sub_category  in SUPER_SUB_CLASSES[super_category]:

@@ -3,12 +3,13 @@ import argparse
 from tqdm import tqdm
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.models as models
 from torch.optim import Adam
 from torch.utils.data import DataLoader
+from torchvision.utils import save_image
 
+from model import Model
 from dataset import StimuliDataset
 
 def load_args():
@@ -36,9 +37,9 @@ class Trainer:
         self.load_data()
 
     def load_model(self):
-        self.model = models.resnet18(pretrained=True)
-        self.model.fc = nn.Linear(512, 4)    # 4 classes in fLoc dataset        
+        self.model = Model()
         self.model.cuda()
+        self.model.train()
         
     def load_data(self):
         dataset = StimuliDataset(self.args.data_root, train=True)
@@ -56,13 +57,15 @@ class Trainer:
         self.init_training()
         for epoch in tqdm(range(self.args.num_epochs)):
             for i, (ims, labels) in tqdm(enumerate(self.dataloader)):
+                save_image(ims, f'train_{i}.png')
                 self.optimizer.zero_grad()
                 ims = ims.cuda()
                 labels = labels.type(torch.long).cuda()
                 preds = self.model(ims)
                 loss = self.criterion(preds, labels)
+                loss.backward()
                 self.optimizer.step()
-                self.all_losses.append(loss.item())                
+                self.all_losses.append(loss.item())
             if epoch % args.save_freq == 0:
                 self.save_checkpoint(epoch)
         
