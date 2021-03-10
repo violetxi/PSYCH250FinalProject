@@ -1,15 +1,17 @@
 import os
 import pdb
+import pickle
 import torch
 import torchvision.transforms as transforms
+from PIL import Image
 from torch.utils.data import Dataset
 
 
 class StimuliDataset(Dataset):
-    def __init__(self, root_dir, train):
-        self.train = train
-        self.root_dir = root_dir
-        self.__load_data()
+    def __init__(self, meta_path, train):
+        self.train = train        
+        metas = pickle.load(open(meta_path, 'rb'))
+        self.image_metas = metas['train'] if self.train else metas['test']
         self.__build_transform()
 
     def __build_transform(self):
@@ -21,22 +23,17 @@ class StimuliDataset(Dataset):
             transforms.RandomHorizontalFlip(),         
             transforms.ToTensor(),            
             normalize,
-        ])
-        
-    def __load_data(self):
-        if self.train:
-            path = os.path.join(self.root_dir, 'train.pt')
-        else:
-            path = os.path.join(self.root_dir, 'val.pt')            
-        self.data, self.label = torch.load(path)
+        ])        
         
     def __len__(self):
-        return len(self.data)
+        return len(self.image_metas)
 
     def __getitem__(self, idx):
-        data = self.transform(self.data[idx])
-        label = self.label[idx]
-        return data, label
+        image_path, label = self.image_metas[idx]
+        image = Image.open(image_path).convert('RGB')
+        image = self.transform(image)
+        label = torch.tensor(label)
+        return image, label
             
 if __name__ == '__main__':
     root_dir = 'data/processed/'

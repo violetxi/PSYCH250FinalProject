@@ -75,8 +75,8 @@ class RawStimuliProcessor(object):
         
         
 if __name__ == '__main__':
-    raw_folder  = './stimuli'
-    processed_folder = './processed'
+    raw_folder  = 'data/stimuli'
+    processed_folder = 'data/processed'
     processor = RawStimuliProcessor(
         raw_folder, processed_folder)
     

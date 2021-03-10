@@ -18,7 +18,7 @@ def load_args():
                         help='Where all the checkpoints are saved.')
     parser.add_argument('--result_folder', type=str,
                         help='Where to save trained models.')
-    parser.add_argument('--data_root', type=str,
+    parser.add_argument('--meta_path', type=str,
                         help="Where processed PT files are.")
     args = parser.parse_args()
     return args
@@ -35,7 +35,7 @@ class RunExp:
         self.model.cuda()
         
     def load_data(self):
-        dataset = StimuliDataset(self.args.data_root, train=False)
+        dataset = StimuliDataset(self.args.meta_path, train=True)
         self.dataloader = DataLoader(
             dataset, batch_size=200,
             shuffle=False, num_workers=4)

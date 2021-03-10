@@ -24,8 +24,8 @@ def load_args():
                         help='Save checkpoint every N epoch')
     parser.add_argument('--result_folder', type=str,
                         help='Where to save trained models.')
-    parser.add_argument('--data_root', type=str,
-                        help="Where processed PT files are.")
+    parser.add_argument('--meta_path', type=str,
+                        help="where meta.pkl is saved.")
     args = parser.parse_args()
     return args
 
@@ -42,7 +42,7 @@ class Trainer:
         self.model.train()
         
     def load_data(self):
-        dataset = StimuliDataset(self.args.data_root, train=True)
+        dataset = StimuliDataset(self.args.meta_path, train=True)
         self.dataloader = DataLoader(
             dataset, batch_size=self.args.batch_size,
             shuffle=True, num_workers=4)
@@ -55,7 +55,8 @@ class Trainer:
         
     def train(self):
         self.init_training()
-        for epoch in tqdm(range(self.args.num_epochs)):
+        self.save_checkpoint(0)
+        for epoch in tqdm(range(1, self.args.num_epochs + 1)):
             for i, (ims, labels) in tqdm(enumerate(self.dataloader)):
                 save_image(ims, f'train_{i}.png')
                 self.optimizer.zero_grad()
