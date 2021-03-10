@@ -4,6 +4,7 @@ import torch
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 
+
 class StimuliDataset(Dataset):
     def __init__(self, root_dir, train):
         self.train = train
@@ -16,7 +17,6 @@ class StimuliDataset(Dataset):
             mean=[0.485, 0.456, 0.406],                                         
             std=[0.229, 0.224, 0.225])
         self.transform = transforms.Compose([
-            transforms.ToPILImage(),
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),         
             transforms.ToTensor(),            

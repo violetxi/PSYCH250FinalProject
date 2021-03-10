@@ -1,8 +1,10 @@
 import os
+import pdb
 import torch
+import pickle
 import numpy as np
 from PIL import Image
-
+from torchvision.utils import save_image
 
 # used to aggregate categories into 4 super classes
 LABEL_MAP = {'faces':0, 'bodies':1, 'places':2, 'characters':3}
@@ -20,8 +22,7 @@ class RawStimuliProcessor(object):
         self.processed_folder = processed_folder
         self.num_train_per_sub_cate = num_train_per_sub_cate
         self.get_category_image_paths()
-        self.split_train_val()
-        self.save_train_val()
+        self.save_resized_train_test()
         
     def get_category_image_paths(self):
         def add_full_path(sub_category, image_files):
@@ -29,8 +30,9 @@ class RawStimuliProcessor(object):
                 self.raw_folder, sub_category, image_file) \
                     for image_file in image_files]        
         self.category_files = {
-            category : [] for category in SUPER_SUB_CLASSES
-1;95;0c        }
+            category : {'train_paths': [], 'test_paths': []} \
+            for category in SUPER_SUB_CLASSES
+        }
         subcategories = os.listdir(self.raw_folder)
         for super_category in SUPER_SUB_CLASSES:
             for sub_category  in SUPER_SUB_CLASSES[super_category]:
@@ -39,55 +41,37 @@ class RawStimuliProcessor(object):
                 )
                 image_paths = add_full_path(
                     sub_category, image_files)
-                self.category_files[super_category].extend(image_paths)
+                train_paths = image_paths[ : self.num_train_per_sub_cate]
+                test_paths = image_paths[self.num_train_per_sub_cate : ]
+                self.category_files[super_category]['train_paths'].extend(train_paths)
+                self.category_files[super_category]['test_paths'].extend(test_paths)
+        return            
+    
+    def save_resize_image(self, src_paths, dst_folder, label, condition):
+        try:
+            os.makedirs(dst_folder)
+        except:
+            pass
+        for src_path in src_paths:            
+            image = Image.open(src_path).convert('RGB')
+            image = image.resize((256, 256))
+            dst_path = os.path.join(dst_folder, os.path.basename(src_path))
+            self.meta[condition].append([dst_path, label])
+            image.save(dst_path)
         return
 
-    def load_images(self, image_paths):
-        images = []
-        for image_path in image_paths:
-            image = Image.open(image_path).convert('RGB')
-            image = image.resize((256, 256))
-            image = torch.from_numpy(np.array(image))
-            image = image.permute(0, 1, 2)
-            images.append(image)
-        return images
-    
-    def split_train_val(self):
-        self.train_images = []
-        self.train_labels = []
-        self.val_images = []
-        self.val_labels = []
-        for category in self.category_files:
-            files = np.random.permutation(self.category_files[category])
-            num_sub_categories = len(SUPER_SUB_CLASSES[category])
-            train = files[: self.num_train_per_sub_cate * num_sub_categories]
-            val = files[self.num_train_per_sub_cate * num_sub_categories :]            
-            train_labels = [LABEL_MAP[category]] * len(train)
-            train_images = self.load_images(train)
-            val_labels = [LABEL_MAP[category]] * len(val)
-            val_images = self.load_images(val)
-            self.train_images.extend(train_images)
-            self.train_labels.extend(train_labels)
-            self.val_images.extend(val_images)
-            self.val_labels.extend(val_labels)
-            
-        self.train_images = torch.stack(self.train_images)
-        self.val_images = torch.stack(self.val_images)
-        self.train_labels = torch.Tensor(self.train_labels)
-        self.val_labels = torch.Tensor(self.val_labels)
-        assert self.train_images.shape[0] == self.train_labels.shape[0] \
-            and self.val_images.shape[0] == self.val_labels.shape[0], \
-            'number of images and labels needs to match!'        
-
-    def save_train_val(self):
-        print(self.train_images.shape, self.val_images.shape)
-        print(self.train_labels.shape, self.val_labels.shape)
-        torch.save(
-            [self.train_images, self.train_labels],
-            os.path.join(self.processed_folder, 'train.pt'))
-        torch.save(
-            [self.val_images, self.val_labels],
-            os.path.join(self.processed_folder, 'val.pt'))
+    def save_resized_train_test(self):
+        self.meta = {'train': [], 'test': []}
+        for class_ in self.category_files:
+            label = LABEL_MAP[class_]
+            train_paths = self.category_files[class_]['train_paths']
+            test_paths = self.category_files[class_]['test_paths']
+            train_class_folder = os.path.join(self.processed_folder, 'train', class_)
+            test_class_folder = os.path.join(self.processed_folder, 'test', class_)            
+            self.save_resize_image(train_paths, train_class_folder, label, 'train')
+            self.save_resize_image(test_paths, test_class_folder, label, 'test')
+        meta_path = os.path.join(self.processed_folder, 'meta.pkl')
+        pickle.dump(self.meta, open(meta_path, 'wb'))
         
         
 if __name__ == '__main__':
