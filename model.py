@@ -7,9 +7,9 @@ import torchvision.models as models
 
 
 class Model(nn.Module):
-    def __init__(self):
+    def __init__(self, pretrained=False):
         super(Model, self).__init__()
-        self.model = models.alexnet(pretrained=True)
+        self.model = models.alexnet(pretrained=pretrained)
         self.model.fc = nn.Linear(4096, 4)    # 4 classes in fLoc dataset
 
     def forward(self, x):

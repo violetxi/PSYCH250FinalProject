@@ -37,7 +37,7 @@ class Trainer:
         self.load_data()
 
     def load_model(self):
-        self.model = Model()
+        self.model = Model(pretrained=True)
         self.model.cuda()
         self.model.train()
         
