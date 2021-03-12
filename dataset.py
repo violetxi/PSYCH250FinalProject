@@ -18,12 +18,20 @@ class StimuliDataset(Dataset):
         normalize = transforms.Normalize(
             mean=[0.485, 0.456, 0.406],                                         
             std=[0.229, 0.224, 0.225])
-        self.transform = transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),         
-            transforms.ToTensor(),            
-            normalize,
-        ])        
+        if self.train:
+            self.transform = transforms.Compose([
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),         
+                transforms.ToTensor(),            
+                normalize,
+            ])
+        else:
+            self.transform = transforms.Compose([
+                transforms.Resize(224),
+                transforms.ToTensor(),                
+                normalize,
+            ])
+            
         
     def __len__(self):
         return len(self.image_metas)
